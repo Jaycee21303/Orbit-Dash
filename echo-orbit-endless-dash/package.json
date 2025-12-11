@@ -1,0 +1,11 @@
+{
+  "name": "echo-orbit-endless-dash",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Static browser game: Echo Orbit Endless Dash",
+  "scripts": {
+    "build": "node tools/build.js",
+    "serve": "npm run build && python -m http.server 3000 -d dist"
+  }
+}
