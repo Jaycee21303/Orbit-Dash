@@ -28,6 +28,7 @@
   let isPlaying = false;
   let shieldTimer = 0;
   let pendingScore = null;
+  let startGraceTimer = 0;
 
   // Time modifiers
   let slowMoTimer = 0;
@@ -74,6 +75,7 @@
     isPlaying = false;
     shieldTimer = 0;
     pendingScore = null;
+    startGraceTimer = 0;
     slowMoTimer = 0;
     speedBoostTimer = 0;
     slowPenaltyTimer = 0;
@@ -131,6 +133,7 @@
     hideStartModal();
     hideGameOver();
     resetRun();
+    startGraceTimer = 1.5;
     isPlaying = true;
     lastTime = 0; // reset timing so first frame delta is clean
   }
@@ -153,6 +156,10 @@
     if (gameOver || !isPlaying) return;
 
     elapsed += dt;
+
+    if (startGraceTimer > 0) {
+      startGraceTimer = Math.max(0, startGraceTimer - dt);
+    }
 
     if (shieldTimer > 0) {
       shieldTimer = Math.max(0, shieldTimer - dt);
@@ -221,7 +228,7 @@
         }
       },
       {
-        invincible: shieldTimer > 0
+        invincible: shieldTimer > 0 || startGraceTimer > 0
       }
     );
   }
@@ -278,7 +285,8 @@
     ctx.stroke();
 
     let playerColor = '#ffffff';
-    if (shieldTimer > 0) playerColor = '#c271ff';
+    if (startGraceTimer > 0) playerColor = '#9cf6ff';
+    else if (shieldTimer > 0) playerColor = '#c271ff';
     else if (slowPenaltyTimer > 0) playerColor = '#55d5ff';
     else if (speedBoostTimer > 0) playerColor = '#ffb347';
 
@@ -314,7 +322,8 @@
     ctx.fillText(`Time: ${elapsed.toFixed(1)}s`, 26, 64);
 
     let state = 'Normal';
-    if (shieldTimer > 0) state = 'Invincible';
+    if (startGraceTimer > 0) state = 'Spawning';
+    else if (shieldTimer > 0) state = 'Invincible';
     else if (slowPenaltyTimer > 0) state = 'Time Drag (blue)';
     else if (slowMoTimer > 0) state = 'Bullet Time';
     else if (speedBoostTimer > 0) state = 'Overclock';
@@ -348,11 +357,13 @@
       const name = scoreNameInput.value || 'anon';
       Leaderboard.addScore(name, pendingScore.wave, pendingScore.time);
     }
+    hideGameOver();
     resetRun();
     showStartModal();
   });
 
   playAgainButton.addEventListener('click', () => {
+    hideGameOver();
     resetRun();
     showStartModal();
   });

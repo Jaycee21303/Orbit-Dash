@@ -33,9 +33,6 @@
         speed *= 0.5;
       } else if (modifiers.speedBoostTimer > 0) {
         speed *= 2.3;
-      } else {
-        // auto-run even without input
-        moveDir += 0.35;
       }
 
       this.angle += moveDir * speed * dt;
