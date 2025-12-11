@@ -49,6 +49,45 @@
     </div>
   </div>
 
+  <div id="start-modal" class="modal-backdrop">
+    <div class="modal">
+      <div class="modal__title">How to Play</div>
+      <div class="modal__body">
+        <p>Dash around the glowing rings, dodge the cyan hazards, and collect power-ups.</p>
+        <ul>
+          <li><strong>Move</strong>: ⬅️ ➡️ or A / D</li>
+          <li><strong>Hop to next ring</strong>: SPACE</li>
+          <li><strong>Gold</strong> orbs trigger bullet-time, then a burst of speed.</li>
+          <li><strong>Blue</strong> orbs slow you down.</li>
+          <li><strong>Purple</strong> orbs grant 5 seconds of invincibility.</li>
+          <li>Survive as long as you can across the five orbits.</li>
+        </ul>
+      </div>
+      <button id="start-button" class="modal__action">Play Game</button>
+    </div>
+  </div>
+
+  <div id="gameover-modal" class="modal-backdrop hidden">
+    <div class="modal modal--wide">
+      <div class="modal__title">Run Complete</div>
+      <div class="modal__body">
+        <p id="gameover-summary">Wave 0 · 0.0s survived</p>
+        <div class="gameover-board">
+          <div class="gameover-board__scores">
+            <div class="gameover-board__heading">Scoreboard</div>
+            <ol id="gameover-leaderboard"></ol>
+          </div>
+          <div class="gameover-board__submit">
+            <label for="score-name">Name</label>
+            <input id="score-name" name="score-name" maxlength="12" value="anon" />
+            <button id="save-score" class="modal__action">Save Score</button>
+            <button id="play-again" class="modal__ghost">Play Again</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="hud-top">
     <div class="title">Echo Orbit: Endless Dash</div>
     <div class="controls">
