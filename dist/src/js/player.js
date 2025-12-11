@@ -1,7 +1,7 @@
 // player.js
 (function (global) {
   const Player = {
-    orbitIndex: 1,
+    orbitIndex: 0,
     angle: 0,
     jumpCooldown: 0,
     orbits: [],
@@ -13,7 +13,7 @@
     },
 
     reset() {
-      this.orbitIndex = 1;
+      this.orbitIndex = 0;
       this.angle = 0;
       this.jumpCooldown = 0;
     },

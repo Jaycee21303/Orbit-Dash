@@ -8,13 +8,26 @@
   const CX = W / 2;
   const CY = H / 2;
 
-  const orbits = [90, 150, 210, 270];
+  const orbits = [90, 150, 210, 270, 330];
+
+  // DOM hooks
+  const startModal = document.getElementById('start-modal');
+  const startButton = document.getElementById('start-button');
+  const gameoverModal = document.getElementById('gameover-modal');
+  const gameoverSummary = document.getElementById('gameover-summary');
+  const gameoverLeaderboard = document.getElementById('gameover-leaderboard');
+  const scoreNameInput = document.getElementById('score-name');
+  const saveScoreButton = document.getElementById('save-score');
+  const playAgainButton = document.getElementById('play-again');
 
   // Game state
   let lastTime = 0;
   let elapsed = 0;        // seconds survived in current run
   let gameOver = false;
   let restarting = false;
+  let isPlaying = false;
+  let shieldTimer = 0;
+  let pendingScore = null;
 
   // Time modifiers
   let slowMoTimer = 0;
@@ -58,6 +71,9 @@
     elapsed = 0;
     gameOver = false;
     restarting = false;
+    isPlaying = false;
+    shieldTimer = 0;
+    pendingScore = null;
     slowMoTimer = 0;
     speedBoostTimer = 0;
     slowPenaltyTimer = 0;
@@ -65,21 +81,58 @@
     Hazards.init(orbits);
   }
 
+  function populateLeaderboardList() {
+    const list = Leaderboard.getEntries();
+    gameoverLeaderboard.innerHTML = '';
+    list.forEach(entry => {
+      const li = document.createElement('li');
+      li.textContent = `${entry.name} — Wave ${entry.wave} · ${entry.time.toFixed(1)}s`;
+      gameoverLeaderboard.appendChild(li);
+    });
+    if (list.length === 0) {
+      const li = document.createElement('li');
+      li.textContent = 'No scores yet. Be the first!';
+      gameoverLeaderboard.appendChild(li);
+    }
+  }
+
+  function showStartModal() {
+    startModal.classList.remove('hidden');
+  }
+
+  function hideStartModal() {
+    startModal.classList.add('hidden');
+  }
+
+  function showGameOver(finalWave, finalTime) {
+    populateLeaderboardList();
+    scoreNameInput.value = 'anon';
+    gameoverSummary.textContent = `Wave ${finalWave} · ${finalTime.toFixed(1)}s survived`;
+    gameoverModal.classList.remove('hidden');
+  }
+
+  function hideGameOver() {
+    gameoverModal.classList.add('hidden');
+  }
+
   function endRun() {
     if (restarting) return;
     gameOver = true;
     restarting = true;
+    isPlaying = false;
 
     const finalTime = elapsed;
     const finalWave = Waves.getWaveParams(elapsed).wave;
+    pendingScore = { wave: finalWave, time: finalTime };
+    showGameOver(finalWave, finalTime);
+  }
 
-    setTimeout(() => {
-      const name = prompt(
-        `Game Over!\nWave: ${finalWave}\nTime: ${finalTime.toFixed(1)}s\n\nEnter name for leaderboard:`
-      ) || 'anon';
-      Leaderboard.addScore(name, finalWave, finalTime);
-      resetRun();
-    }, 250);
+  function startRun() {
+    hideStartModal();
+    hideGameOver();
+    resetRun();
+    isPlaying = true;
+    lastTime = 0; // reset timing so first frame delta is clean
   }
 
   function loop(timestamp) {
@@ -97,9 +150,13 @@
   }
 
   function update(dt) {
-    if (gameOver) return;
+    if (gameOver || !isPlaying) return;
 
     elapsed += dt;
+
+    if (shieldTimer > 0) {
+      shieldTimer = Math.max(0, shieldTimer - dt);
+    }
 
     // Timers
     if (slowMoTimer > 0) {
@@ -157,7 +214,14 @@
         onBlue: () => {
           // extend / set slow penalty
           slowPenaltyTimer = Math.min(slowPenaltyTimer + 2.2, 6.0);
+        },
+        onPurple: () => {
+          shieldTimer = 5.0;
+          slowPenaltyTimer = 0;
         }
+      },
+      {
+        invincible: shieldTimer > 0
       }
     );
   }
@@ -214,7 +278,8 @@
     ctx.stroke();
 
     let playerColor = '#ffffff';
-    if (slowPenaltyTimer > 0) playerColor = '#55d5ff';
+    if (shieldTimer > 0) playerColor = '#c271ff';
+    else if (slowPenaltyTimer > 0) playerColor = '#55d5ff';
     else if (speedBoostTimer > 0) playerColor = '#ffb347';
 
     ctx.fillStyle = playerColor;
@@ -249,7 +314,8 @@
     ctx.fillText(`Time: ${elapsed.toFixed(1)}s`, 26, 64);
 
     let state = 'Normal';
-    if (slowPenaltyTimer > 0) state = 'Time Drag (blue)';
+    if (shieldTimer > 0) state = 'Invincible';
+    else if (slowPenaltyTimer > 0) state = 'Time Drag (blue)';
     else if (slowMoTimer > 0) state = 'Bullet Time';
     else if (speedBoostTimer > 0) state = 'Overclock';
 
@@ -266,13 +332,32 @@
       ctx.fillStyle = '#ffffff';
       ctx.font = '32px system-ui, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('Game Over', CX, CY - 10);
+      ctx.fillText('Run Complete', CX, CY - 10);
       ctx.font = '18px system-ui, sans-serif';
-      ctx.fillText('Saving score…', CX, CY + 20);
+      ctx.fillText('Check the scoreboard to restart', CX, CY + 20);
       ctx.restore();
     }
   }
+  // UI wiring
+  startButton.addEventListener('click', () => {
+    startRun();
+  });
 
-  // Start the loop immediately (no menu)
+  saveScoreButton.addEventListener('click', () => {
+    if (pendingScore) {
+      const name = scoreNameInput.value || 'anon';
+      Leaderboard.addScore(name, pendingScore.wave, pendingScore.time);
+    }
+    resetRun();
+    showStartModal();
+  });
+
+  playAgainButton.addEventListener('click', () => {
+    resetRun();
+    showStartModal();
+  });
+
+  // Start the loop and show instructions first
+  showStartModal();
   requestAnimationFrame(loop);
 })();
