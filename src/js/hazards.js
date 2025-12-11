@@ -4,6 +4,7 @@
     hazards: [],
     goldBalls: [],
     blueBalls: [],
+    purpleBalls: [],
     orbits: [],
     ballSpawnTimer: 1.5,
 
@@ -12,6 +13,7 @@
       this.hazards = [];
       this.goldBalls = [];
       this.blueBalls = [];
+      this.purpleBalls = [];
       this.ballSpawnTimer = 1.5;
 
       // Initial hazards on each orbit
@@ -27,7 +29,8 @@
       }
     },
 
-    update(dt, waveParams, timeScale, playerPos, callbacks) {
+    update(dt, waveParams, timeScale, playerPos, callbacks, options = {}) {
+      const { invincible = false } = options;
       const envSpeed = timeScale; // combined with waveParams in caller
       const playerKillRadius2 = 22 * 22;
       const ballCatchRadius2 = 18 * 18;
@@ -47,12 +50,17 @@
         const speed = b.baseSpeed * envSpeed;
         b.angle += speed * dt;
       });
+      this.purpleBalls.forEach(b => {
+        const speed = b.baseSpeed * envSpeed;
+        b.angle += speed * dt;
+      });
 
       // Spawn balls
       this.ballSpawnTimer -= dt;
       if (this.ballSpawnTimer <= 0) {
         const orbitIndex = Math.floor(Math.random() * this.orbits.length);
         const isBlue = Math.random() < waveParams.blueChance;
+        const isPurple = !isBlue && Math.random() < waveParams.purpleChance;
         const ball = {
           orbitIndex,
           angle: Math.random() * Math.PI * 2,
@@ -60,6 +68,8 @@
         };
         if (isBlue) {
           this.blueBalls.push(ball);
+        } else if (isPurple) {
+          this.purpleBalls.push(ball);
         } else {
           this.goldBalls.push(ball);
         }
@@ -77,7 +87,7 @@
         const y = playerPos.centerY + Math.sin(h.angle) * r;
         const dx = x - px;
         const dy = y - py;
-        if (dx * dx + dy * dy < playerKillRadius2) {
+        if (!invincible && dx * dx + dy * dy < playerKillRadius2) {
           callbacks.onHit();
           return; // stop processing after death
         }
@@ -108,6 +118,20 @@
         if (dx * dx + dy * dy < ballCatchRadius2) {
           this.blueBalls.splice(i, 1);
           callbacks.onBlue();
+        }
+      }
+
+      // Purple collision
+      for (let i = this.purpleBalls.length - 1; i >= 0; i--) {
+        const b = this.purpleBalls[i];
+        const r = this.orbits[b.orbitIndex];
+        const x = playerPos.centerX + Math.cos(b.angle) * r;
+        const y = playerPos.centerY + Math.sin(b.angle) * r;
+        const dx = x - px;
+        const dy = y - py;
+        if (dx * dx + dy * dy < ballCatchRadius2) {
+          this.purpleBalls.splice(i, 1);
+          callbacks.onPurple();
         }
       }
     },
@@ -153,6 +177,21 @@
         ctx.shadowColor = '#33ccff';
         ctx.shadowBlur = 14;
         ctx.fillStyle = '#33ccff';
+        ctx.beginPath();
+        ctx.arc(x, y, 9, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
+
+      // Purple balls
+      this.purpleBalls.forEach(b => {
+        const r = this.orbits[b.orbitIndex];
+        const x = centerX + Math.cos(b.angle) * r;
+        const y = centerY + Math.sin(b.angle) * r;
+        ctx.save();
+        ctx.shadowColor = '#c271ff';
+        ctx.shadowBlur = 16;
+        ctx.fillStyle = '#c271ff';
         ctx.beginPath();
         ctx.arc(x, y, 9, 0, Math.PI * 2);
         ctx.fill();
