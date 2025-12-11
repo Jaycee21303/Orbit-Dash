@@ -16,6 +16,9 @@
     let blueChance = 0.20 + wave * 0.02;
     blueChance = Math.min(blueChance, 0.75);        // cap at 75%
 
+    let purpleChance = 0.12 + wave * 0.015;         // invincibility frequency
+    purpleChance = Math.min(purpleChance, 0.45);
+
     const goldChance = 0.5;                         // constant-ish, more RNG
 
     return {
@@ -24,7 +27,8 @@
       hazardCountMultiplier,
       envSpeedMultiplier,
       blueChance,
-      goldChance
+      goldChance,
+      purpleChance
     };
   }
 

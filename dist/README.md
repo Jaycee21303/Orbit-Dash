@@ -2,6 +2,11 @@
 
 A fast, circular endless runner that lives entirely in your browser. Orbit around a glowing core, dodge spinning hazards, and grab orbs to bend time. Everything is pure HTML5 canvas and JavaScript—no external assets or build tools required.
 
+## Play online
+The game is served from the main branch via GitHub Pages:
+
+https://Jaycee21303.github.io/Orbit-Dash/
+
 ## How to play
 - **Move:** `←` / `→` or `A` / `D`
 - **Jump to next orbit:** `SPACE`
